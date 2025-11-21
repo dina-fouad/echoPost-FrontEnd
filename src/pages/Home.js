@@ -1,6 +1,7 @@
 import HeroSection from "../Components/HeroSection";
 import LatestPosts from "../Components/LatestPosts";
 import Sidebar from "../Components/Sidebar";
+import ImageFeed from "./ImageFeed";
 import { Box, Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import TrendingFlatIcon from "@mui/icons-material/ArrowForwardIos";
@@ -8,42 +9,56 @@ import TrendingFlatIcon from "@mui/icons-material/ArrowForwardIos";
 export default function Home() {
   return (
     <div>
-      {/* Hero section at the top */}
-      <Box sx={{ mb: 5 }}>
+      {/* Hero */}
+      <Box sx={{ mb: 8 }}>
         <HeroSection />
       </Box>
 
+      {/* MAIN LAYOUT — 3 COLUMNS */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", md: "row" }, // Stack on mobile, row on desktop
-
-          // Reduced gap between LatestPosts & Sidebar on smaller screens
-          gap: { xs: 0.8, sm: 1.5, md: 3 },
-
-          mt: 4,
-          px: { xs: 1, sm: 2, md: 4 },
-
-          alignItems: { xs: "center", md: "flex-start" }, // Center on mobile
+          flexDirection: { xs: "column", md: "row" },
+          justifyContent: "space-between",
+          gap: 3,
+          maxWidth: "1500px",
+          mx: "auto",
         }}
       >
-        {/* Latest Posts section */}
+        {/* SIDEBAR */}
         <Box
           sx={{
-            flex: 2.5, // Main content takes more space
+            
+            width: { xs: "90%", md: "300px" },
 
-            width: {
-              xs: "94%", // Slightly smaller width on small screens
-              sm: "95%",
-              md: "100%",
-            },
-            maxWidth: { xs: "580px", md: "100%" },
+            flex: { xs: "unset", md: "0.9" },
+
+          
+            mx: { xs: 0, md: 3 },
+
+            order: { xs: 2, md: 1 },
+
+            px: { xs: 1, md: 0 },
+           
+          }}
+        >
+          <Sidebar />
+        </Box>
+
+        {/* POSTS — يتحرك يمين */}
+        <Box
+          sx={{
+            flex: { xs: "unset", md: "2.4" },
+            maxWidth: { md: "650px" },
+            order: { xs: 1, md: 2 },
+            mx: "auto",
+
+            ml: { md: "50px" },
           }}
         >
           <LatestPosts />
 
-          {/* "See all posts" button */}
-          <Box sx={{ mt: 1.2, textAlign: { xs: "center", md: "left" } }}>
+          <Box sx={{ mt: 1.2, textAlign: { xs: "center" } }}>
             <Button
               component={Link}
               to="/posts"
@@ -52,12 +67,10 @@ export default function Home() {
                 fontSize: "18px",
                 fontWeight: 600,
                 textTransform: "none",
-                padding: "3px 6px",
-                minWidth: "unset",
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                mx: { xs: "auto", md: "0" }, // Center on mobile
+                mx: { xs: "auto", md: "0" },
               }}
             >
               See all posts
@@ -66,28 +79,16 @@ export default function Home() {
           </Box>
         </Box>
 
-        {/* Sidebar section */}
+        {/* IMAGE FEED */}
         <Box
           sx={{
-            flex: 1, // Sidebar takes less space
-
-            mt: { xs: 2, md: 5 }, // More margin on desktop
-
-            width: {
-              xs: "92%", // Slightly larger sidebar width on small screens
-              sm: "300px",
-              md: "100%",
-            },
-
-            maxWidth: { xs: "330px", sm: "340px", md: "350px" },
-
-            // Push sidebar slightly to the right on mobile screens
-            mr: { xs: "22px", sm: "18px", md: 0 },
-
-            textAlign: { xs: "center", md: "left" }, // Center items on mobile
+            flex: { xs: "unset", md: "1.4" },
+            maxWidth: { md: "400px" },
+            order: { xs: 3, md: 3 },
+            mx: { xs: "auto", md: 0 },
           }}
         >
-          <Sidebar />
+          <ImageFeed />
         </Box>
       </Box>
     </div>

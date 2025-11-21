@@ -1,201 +1,212 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Box,
   Card,
-  CardMedia,
   CardContent,
   Typography,
   Avatar,
-  Divider,
   Stack,
+  Divider,
 } from "@mui/material";
 
-import FavoriteIcon from "@mui/icons-material/Favorite";
+import PostLikesSection from "../pages/PostLikesSection";
+
+function timeAgo(date) {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    week: 604800,
+    day: 86400,
+    hour: 3600,
+    minute: 60,
+    second: 1,
+  };
+
+  for (let key in intervals) {
+    const interval = Math.floor(seconds / intervals[key]);
+    if (interval >= 1) {
+      return `${interval} ${key}${interval > 1 ? "s" : ""} ago`;
+    }
+  }
+}
 
 export default function LatestPosts() {
-  const [expanded, setExpanded] = React.useState(false);
-  const MAX_LENGTH = 120;
+  const [posts, setPosts] = useState([]);
 
-  const posts = [
-    {
-      id: 1,
-      title: "How to learn React fast",
-      image:
-        "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200",
-      description:
-        "A simple guide to mastering React in a short time. This includes hooks, components, and state management.",
-      category: "Programming",
-      createdAt: "2025-02-20",
-      likes: 12,
-      likedUsers: [
-        "/images/user1.jpg",
-        "/images/user2.jpg",
-        "/images/user3.jpg",
-      ],
-      comments: [
-        {
-          id: 1,
-          user: "Maya",
-          avatar: "/images/user1.jpg",
-          text: "This is really helpful!",
-          createdAt: "2025-02-21",
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/posts")
+      .then((res) => {
+        setPosts(res.data.post);
+      })
+      .catch((err) => console.log(err));
+  }, []);
 
   return (
-    <Box sx={{ padding: { xs: "15px 0", sm: "30px 0" } }}>
-      {posts.map((post) => (
+    <Box sx={{ padding: { xs: "6px", sm: "12px" } }}>
+      {posts.slice(0, 3).map((post) => (
         <Card
-          key={post.id}
+          key={post._id}
           sx={{
-            backgroundColor: "#222",
-            color: "white",
+            backgroundColor: "#1d1d1d",
             borderRadius: "12px",
-            mb: 3,
-            paddingBottom: "10px",
-            width: { xs: "100%", sm: "95%" },
-            mx: "auto",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.28)",
+            mb: 4,
+            overflow: "hidden",
+            color: "white",
+            transition: "0.25s",
+            "&:hover": {
+              transform: "scale(1.012)",
+            },
           }}
         >
-          {/* Image */}
-          <CardMedia
-            component="img"
-            image={post.image}
-            alt="Post Image"
-            sx={{
-              height: { xs: 150, sm: 180, md: 250 },
-              objectFit: "cover",
-              borderRadius: "12px 12px 0 0",
-            }}
-          />
-
-          <CardContent sx={{ padding: { xs: "10px", sm: "16px" } }}>
-            {/* Title */}
-            <Typography
-              sx={{
-                fontSize: { xs: "16px", sm: "20px" },
-                fontWeight: 600,
-                mb: 1,
-              }}
-            >
-              {post.title}
-            </Typography>
-
-            {/* Category */}
-            <Typography
-              sx={{
-                fontSize: { xs: "11px", sm: "13px" },
-                color: "#bbb",
-                mb: 2,
-              }}
-            >
-              {post.category} • {post.createdAt}
-            </Typography>
-
-            {/* Description */}
-            <Typography
-              sx={{ fontSize: { xs: "13px", sm: "15px" }, color: "#ddd", mb: 1 }}
-            >
-              {expanded
-                ? post.description
-                : post.description.length > MAX_LENGTH
-                ? post.description.substring(0, MAX_LENGTH) + "..."
-                : post.description}
-            </Typography>
-
-            {post.description.length > MAX_LENGTH && (
-              <Typography
-                onClick={() => setExpanded(!expanded)}
-                sx={{
-                  color: "#4da6ff",
-                  textTransform: "none",
-                  mb: 2,
-                  p: 0,
-                  fontSize: { xs: "12px", sm: "14px" },
-                  cursor: "pointer",
+          {/* IMAGE */}
+          {post.postImg?.url && (
+            <Box sx={{ width: "100%", overflow: "hidden" }}>
+              <img
+                src={post.postImg.url}
+                alt="post"
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  objectFit: "cover",
+                  display: "block",
                 }}
-              >
-                {expanded ? "See Less" : "See More"}
+              />
+            </Box>
+          )}
+
+          {/* HEADER */}
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={2}
+            sx={{
+              padding: { xs: "12px 14px", sm: "14px 18px" },
+              pt: post.postImg?.url ? 2 : 3,
+            }}
+          >
+            <Avatar
+              src={post.user?.profileImage?.url || "/images/user.png"}
+              sx={{ width: 44, height: 44 }}
+            />
+            <Box>
+              <Typography sx={{ fontWeight: 700, fontSize: "15px" }}>
+                {post.user?.userName || "User"}
               </Typography>
-            )}
-
-            {/* Likes */}
-            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-              <FavoriteIcon sx={{ color: "red", fontSize: { xs: 18, sm: 22 } }} />
-              <Typography sx={{ fontSize: { xs: "13px", sm: "15px" } }}>
-                {post.likes}
+              <Typography sx={{ fontSize: "11px", color: "#bbb" }}>
+                {timeAgo(post.createdAt)}
               </Typography>
+            </Box>
+          </Stack>
 
-              <Stack direction="row" spacing={-1}>
-                {post.likedUsers.map((img, index) => (
-                  <Avatar
-                    key={index}
-                    src={img}
-                    sx={{
-                      width: { xs: 20, sm: 24 },
-                      height: { xs: 20, sm: 24 },
-                      border: "2px solid #222",
-                    }}
-                  />
-                ))}
-              </Stack>
-            </Stack>
-
-            <Divider sx={{ backgroundColor: "#444", my: 2 }} />
-
-            {/* Comments Title */}
+          {/* DESCRIPTION */}
+          <CardContent sx={{ pt: 0, pb: 1 }}>
             <Typography
               sx={{
-                fontSize: { xs: "14px", sm: "16px" },
-                fontWeight: 600,
-                mb: 2,
+                fontSize: "15px",
+                color: "#e9e9e9",
+                whiteSpace: "pre-line",
+                mb: 1,
+                lineHeight: 1.5,
+              }}
+            >
+              {post.description}
+            </Typography>
+          </CardContent>
+
+          {/* LIKES SECTION */}
+          <Box>
+            <PostLikesSection post={post} />
+          </Box>
+
+          {/* SEPARATOR */}
+          <Divider sx={{ borderColor: "#333", my: 1.1 }} />
+
+          {/* COMMENTS */}
+          <Box sx={{ padding: { xs: "8px 14px", sm: "6px 18px" } }}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                mb: 1.5,
+                color: "#fff",
+                fontSize: "15px",
               }}
             >
               Comments ({post.comments.length})
             </Typography>
 
-            {/* Comments List */}
             {post.comments.map((c) => (
-              <Box
-                key={c.id}
+              <Stack
+                key={c._id}
+                direction="row"
+                spacing={1.7}
                 sx={{
-                  backgroundColor: "#1a1a1a",
-                  padding: { xs: "8px", sm: "10px" },
-                  borderRadius: "8px",
-                  mb: 2,
+                  mb: 2.2,
+                  backgroundColor: "#2a2a2a",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
                 }}
               >
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Avatar
-                    src={c.avatar}
-                    sx={{ width: { xs: 32, sm: 40 }, height: { xs: 32, sm: 40 } }}
-                  />
+                <Avatar
+                  src={c.user.profileImage.url}
+                  sx={{ width: 36, height: 36 }}
+                />
 
-                  <Box>
+                <Box sx={{ flex: 1 }}>
+                  {/* USERNAME + TIME */}
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ mb: 0.4 }}
+                  >
                     <Typography
-                      sx={{ fontWeight: 600, fontSize: { xs: "13px", sm: "15px" } }}
+                      sx={{ fontWeight: 700, fontSize: "13px", color: "#fff" }}
                     >
-                      {c.user}
+                      {c.user?.userName}
                     </Typography>
+                    <Typography sx={{ color: "#999", fontSize: "11px", ml: 2 }}>
+                      {timeAgo(c.createdAt)}
+                    </Typography>
+                  </Stack>
 
-                    <Typography
-                      sx={{ fontSize: { xs: "12px", sm: "14px" }, color: "#ccc" }}
-                    >
-                      {c.text}
-                    </Typography>
+                  {/* COMMENT TEXT */}
+                  <Typography
+                    sx={{
+                      fontSize: "13px",
+                      color: "#ddd",
+                      lineHeight: 1.45,
+                      mb: 0.6,
+                    }}
+                  >
+                    {c.text}
+                  </Typography>
 
-                    <Typography
-                      sx={{ fontSize: { xs: "10px", sm: "12px" }, color: "#777" }}
-                    >
-                      {c.createdAt}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
+                  {/* LIKES */}
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      background:
+                        "linear-gradient(90deg, rgb(5,89,90), rgb(3,120,121))",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      cursor: "pointer",
+                      "&:hover": {
+                        opacity: 0.7, // 🔥 خفيف فقط لإشارة إنه ممكن ينضغط
+                      },
+                    }}
+                  >
+                    ❤️ {c.likesComment?.length || 0} Likes
+                  </Typography>
+                </Box>
+              </Stack>
             ))}
-          </CardContent>
+          </Box>
         </Card>
       ))}
     </Box>

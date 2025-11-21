@@ -112,8 +112,12 @@ export default function Header() {
             <Box
               sx={{
                 display: { xs: "none", md: "flex" }, // Hidden on mobile
+
+                position: "absolute",
+                left: "45%",
+                transform: "translateX(-50%)",
+
                 gap: 2,
-                ml: 4,
               }}
             >
               {menuItems.map((item) => (
