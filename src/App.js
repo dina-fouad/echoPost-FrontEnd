@@ -7,30 +7,50 @@ import AdminDashBoard from "./pages/AdminDashBoard";
 import Register from "./pages/Forms/Register";
 import Home from "./pages/Home";
 import Footer from "./Components/Footer";
+import PostDetails from "./pages/PostDetails";
+import { useSnackbar } from "notistack";
 
 function App() {
   const location = useLocation();
-
   const isHome = location.pathname === "/";
+  const { enqueueSnackbar } = useSnackbar();
+
+  function toastMsg(msg, type) {
+    enqueueSnackbar(msg, { variant: type });
+  }
 
   return (
-    <div>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh", // ✅ يملأ كامل الشاشة
+      }}
+    >
+      {/* Header */}
       <Header />
 
-      <div style={{ paddingTop: isHome ? "0px" : "100px" }}>
+      {/* Main Content */}
+      <div
+        style={{
+          flex: 1, // ✅ يملأ المساحة المتبقية
+          paddingTop: isHome ? "0px" : "100px",
+        }}
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/posts" element={<PostsPage />} />
-          <Route path="/create" element={<CreatePost />} />
+          <Route path="/create" element={<CreatePost toastMsg={toastMsg} />} />
+          <Route path="/create/details/:id" element={<PostDetails />} />
           <Route path="/dashboard" element={<AdminDashBoard />} />
           <Route path="*" element={<h1>404 Not Found</h1>} />
         </Routes>
-
-        
-        <Footer />
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

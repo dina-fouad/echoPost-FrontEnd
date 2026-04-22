@@ -1,27 +1,28 @@
-// 🌟 TopicFeed Component
-// This component fetches daily recipes, shuffles them using a daily seed,
-// and displays them in a Pinterest-style masonry layout.
-
+// 🌟 TopicFeed Component with Skeleton Loading
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Box, Typography, Card, CardMedia, CardContent } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Card,
+  CardMedia,
+  CardContent,
+  Skeleton,
+} from "@mui/material";
 
 export default function TopicFeed() {
-  // State to store the 9 daily selected recipes
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true); 
 
-  // Public recipes API
   const apiUrl = "https://api.sampleapis.com/recipes/recipes";
 
-  // 🌞 Generate a seed that changes once per day
-  // This ensures the recipe order stays the same all day for every user.
+  // 🌞 Daily seed
   const getDailySeed = () => {
     const today = new Date();
     return today.getFullYear() + today.getMonth() + today.getDate();
   };
 
-  // 🎲 Shuffle an array using a seeded random generator
-  // Makes the shuffle consistent and repeatable for the same day.
+  // 🎲 Seeded shuffle
   const shuffleWithSeed = (array, seed) => {
     let shuffled = [...array];
     let random = seed;
@@ -35,36 +36,69 @@ export default function TopicFeed() {
     return shuffled;
   };
 
-  // 🔥 Fetch 9 recipes when the component first loads
+  //  Fetch recipes
   useEffect(() => {
     axios
       .get(apiUrl)
       .then((res) => {
         const seed = getDailySeed();
         const shuffled = shuffleWithSeed(res.data, seed);
-
-        // Keep only 9 items per day
         setItems(shuffled.slice(0, 9));
+        setLoading(false); 
       })
       .catch((err) => console.log(err));
   }, []);
 
+  // Skeleton while loading
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          mt: 3,
+          columnCount: { xs: 2, sm: 2, md: 3 },
+          columnGap: "14px",
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Box
+            key={i}
+            sx={{
+              breakInside: "avoid",
+              mb: 2,
+              display: "inline-block",
+              width: "100%",
+            }}
+          >
+            <Skeleton
+              variant="rectangular"
+              height={150}
+              sx={{ borderRadius: "12px", bgcolor: "#3b3b3b" }}
+            />
+            <Skeleton
+              height={18}
+              sx={{
+                mt: 1,
+                width: "70%",
+                borderRadius: "6px",
+                bgcolor: "#3b3b3b",
+              }}
+            />
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+
+  //  After loading, show real items
   return (
     <Box
       sx={{
         mt: 3,
-
-        // 📌 Pinterest-style layout using CSS columns
-        columnCount: {
-          xs: 2, // mobile: 2 columns
-          sm: 2,
-          md: 3, // desktop: 3 columns
-        },
+        columnCount: { xs: 2, sm: 2, md: 3 },
         columnGap: "14px",
       }}
     >
       {items.map((item) => {
-        // Clicking a card searches the recipe title on Google
         const googleUrl =
           "https://www.google.com/search?q=" +
           encodeURIComponent(item.title);
@@ -77,39 +111,33 @@ export default function TopicFeed() {
             target="_blank"
             rel="noopener noreferrer"
             sx={{
-              breakInside: "avoid", // prevent card from breaking across columns
+              breakInside: "avoid",
               mb: 2,
               display: "inline-block",
               width: "100%",
-
-              // 🌑 Dark theme matching the sidebar
               borderRadius: "12px",
               overflow: "hidden",
               backgroundColor: "#2a2a2a",
               boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
-
               cursor: "pointer",
               transition: "0.25s ease",
-
               "&:hover": {
                 backgroundColor: "#353535",
                 transform: "scale(1.02)",
               },
             }}
           >
-            {/* 📸 Recipe image */}
             <CardMedia
               component="img"
               sx={{
                 width: "100%",
                 height: "auto",
-                objectFit: "cover", // keeps Pinterest style
+                objectFit: "cover",
               }}
               image={item.photoUrl}
               alt={item.title}
             />
 
-            {/* 📝 Recipe title */}
             <CardContent sx={{ p: 1.2 }}>
               <Typography
                 sx={{

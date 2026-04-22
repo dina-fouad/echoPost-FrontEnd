@@ -88,7 +88,7 @@ export default function Home() {
             mx: { xs: "auto", md: 0 },
           }}
         >
-          <ImageFeed />
+          <ImageFeed/>
         </Box>
       </Box>
     </div>

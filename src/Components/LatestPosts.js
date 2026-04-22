@@ -1,5 +1,5 @@
 // Import React and required hooks
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
@@ -10,10 +10,11 @@ import {
   Avatar,
   Stack,
   Divider,
-  CircularProgress,   
+  CircularProgress,
 } from "@mui/material";
 
 import PostLikesSection from "../pages/PostLikesSection";
+import { Link } from "react-router-dom";
 
 // Helper function to format date into "time ago" style
 function timeAgo(date) {
@@ -38,41 +39,36 @@ function timeAgo(date) {
 }
 
 export default function LatestPosts({ showAll = false }) {
-  // All posts from backend
   const [allPosts, setAllPosts] = useState([]);
-  // Posts visible on screen
   const [visiblePosts, setVisiblePosts] = useState([]);
 
   const postsPerPage = 2;
 
-  // Fetch ALL posts once
-  const loadAllPosts = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/posts");
-      const posts = res.data.post || [];
+ const loadAllPosts = useCallback(async () => {
+  try {
+    const res = await axios.get("http://localhost:5000/api/posts");
+    const posts = res.data.post || [];
 
-      setAllPosts(posts);
+    setAllPosts(posts);
 
-      if (!showAll) {
-        setVisiblePosts(posts.slice(0, 3));
-      } else {
-        setVisiblePosts(posts.slice(0, postsPerPage));
-      }
-    } catch (err) {
-      console.log(err);
+    if (!showAll) {
+      setVisiblePosts(posts.slice(0, 3));
+    } else {
+      setVisiblePosts(posts.slice(0, postsPerPage));
     }
-  };
+  } catch (err) {
+    console.log(err);
+  }
+}, [showAll, postsPerPage]);
 
-  useEffect(() => {
-    loadAllPosts();
-  }, [showAll]);
+ useEffect(() => {
+  loadAllPosts();
+}, [loadAllPosts]);
 
-  // Load next 3 posts
   const fetchMore = () => {
     setVisiblePosts(allPosts.slice(0, visiblePosts.length + postsPerPage));
   };
 
-  // HOME → NO infinite scroll
   if (!showAll) {
     return (
       <Box sx={{ padding: { xs: "6px", sm: "12px" } }}>
@@ -83,28 +79,18 @@ export default function LatestPosts({ showAll = false }) {
     );
   }
 
-  // POSTS PAGE → Infinite scroll
   return (
     <InfiniteScroll
       dataLength={visiblePosts.length}
       next={fetchMore}
       hasMore={visiblePosts.length < allPosts.length}
-      
       loader={
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: "20px",
-          }}
-        >
+        <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
           <CircularProgress size={32} sx={{ color: "#038889" }} />
         </Box>
       }
-
       endMessage={
-        <p style={{ textAlign: "center", color: "#aaa", marginTop: "10px" }}>
+        <p style={{ textAlign: "center", color: "#aaa" }}>
           No more posts
         </p>
       }
@@ -119,155 +105,187 @@ export default function LatestPosts({ showAll = false }) {
   );
 }
 
-// Component that renders a single post card
+// ================= POST CARD =================
 function CardPost({ post }) {
-  return (
-    <Card
-      key={post._id}
-      sx={{
-        backgroundColor: "#1d1d1d",
-        borderRadius: "12px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.28)",
-        mb: 4,
-        overflow: "hidden",
-        color: "white",
-        transition: "0.25s",
-        "&:hover": { transform: "scale(1.012)" },
-      }}
-    >
-      {/* IMAGE */}
-      {post.postImg?.url && (
-        <Box sx={{ width: "100%", overflow: "hidden" }}>
-          <img
-            src={post.postImg.url}
-            alt="post"
-            style={{
-              width: "100%",
-              height: "auto",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
-        </Box>
-      )}
+  const [showAllComments, setShowAllComments] = useState(false);
 
-      <Stack
-        direction="row"
-        alignItems="center"
-        spacing={2}
+  const comments = post.comments || [];
+
+  // 👇 Facebook behavior (latest comment only)
+  const visibleComments = showAllComments
+    ? comments
+    : comments.slice(-1);
+
+  return (
+    <Box
+      component={Link}
+      to={`/create/details/${post._id}`}
+      sx={{ textDecoration: "none" }}
+    >
+      <Card
         sx={{
-          padding: { xs: "12px 14px", sm: "14px 18px" },
-          pt: post.postImg?.url ? 2 : 3,
+          backgroundColor: "#1d1d1d",
+          borderRadius: "12px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.28)",
+          mb: 4,
+          overflow: "hidden",
+          color: "white",
+          transition: "0.25s",
+          "&:hover": { transform: "scale(1.012)" },
         }}
       >
-        <Avatar
-          src={post.user?.profileImage?.url || "/images/user.png"}
-          sx={{ width: 44, height: 44 }}
-        />
-        <Box>
-          <Typography sx={{ fontWeight: 700, fontSize: "15px" }}>
-            {post.user?.userName || "User"}
-          </Typography>
-          <Typography sx={{ fontSize: "11px", color: "#bbb" }}>
-            {timeAgo(post.createdAt)}
-          </Typography>
-        </Box>
-      </Stack>
+        {/* IMAGE */}
+        {post.postImg?.url && (
+          <Box sx={{ width: "100%", overflow: "hidden" }}>
+            <img
+              src={post.postImg.url}
+              alt="post"
+              style={{
+                width: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          </Box>
+        )}
 
-      <CardContent sx={{ pt: 0, pb: 1 }}>
-        <Typography
-          sx={{
-            fontSize: "15px",
-            color: "#e9e9e9",
-            whiteSpace: "pre-line",
-            mb: 1,
-            lineHeight: 1.5,
-          }}
-        >
-          {post.description}
-        </Typography>
-      </CardContent>
+        {/* USER */}
+        <Stack direction="row" spacing={2} sx={{ p: 2 }}>
+          <Avatar src={post.user?.profileImage?.url} />
+          <Box>
+            <Typography fontWeight={700}>
+              {post.user?.userName}
+            </Typography>
+            <Typography fontSize={11} color="#bbb">
+              {timeAgo(post.createdAt)}
+            </Typography>
+          </Box>
+        </Stack>
 
-      <Box>
+        {/* DESCRIPTION */}
+        <CardContent sx={{ pt: 0 }}>
+          <Typography>{post.description}</Typography>
+        </CardContent>
+
         <PostLikesSection post={post} />
-      </Box>
 
-      <Divider sx={{ borderColor: "#333", my: 1.1 }} />
+        <Divider sx={{ borderColor: "#333", my: 1 }} />
 
-      <Box sx={{ padding: { xs: "8px 14px", sm: "6px 18px" } }}>
-        <Typography
-          sx={{
-            fontWeight: 700,
-            mb: 1.5,
-            color: "#fff",
-            fontSize: "15px",
-          }}
-        >
-          Comments ({post.comments?.length || 0})
-        </Typography>
-
-        {post.comments?.map((c) => (
-          <Stack
-            key={c._id}
-            direction="row"
-            spacing={1.7}
+        {/* COMMENTS */}
+        <Box sx={{ padding: { xs: "8px 14px", sm: "6px 18px" } }}>
+          <Typography
             sx={{
-              mb: 2.2,
-              backgroundColor: "#2a2a2a",
-              padding: "10px 12px",
-              borderRadius: "10px",
+              fontWeight: 700,
+              mb: 1.2,
+              color: "#fff",
+              fontSize: "15px",
             }}
           >
-            <Avatar
-              src={c.user.profileImage.url}
-              sx={{ width: 36, height: 36 }}
-            />
+            Comments ({comments.length})
+          </Typography>
 
-            <Box sx={{ flex: 1 }}>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ mb: 0.4 }}
-              >
-                <Typography
-                  sx={{ fontWeight: 700, fontSize: "13px", color: "#fff" }}
+          {/* View previous comments */}
+          {comments.length > 1 && !showAllComments && (
+            <Typography
+              onClick={(e) => {
+                e.preventDefault();
+                setShowAllComments(true);
+              }}
+              sx={{
+                fontSize: "13px",
+                color: "#999",
+                cursor: "pointer",
+                mb: 1,
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              View previous comments
+            </Typography>
+          )}
+
+          {visibleComments.map((c) => (
+            <Stack
+              key={c._id}
+              direction="row"
+              spacing={1.7}
+              sx={{
+                mb: 2.2,
+                backgroundColor: "#2a2a2a",
+                padding: "10px 12px",
+                borderRadius: "10px",
+              }}
+            >
+              <Avatar
+                src={c.user.profileImage.url}
+                sx={{ width: 36, height: 36 }}
+              />
+
+              <Box sx={{ flex: 1 }}>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ mb: 0.4 }}
                 >
-                  {c.user?.userName}
-                </Typography>
-                <Typography sx={{ color: "#999", fontSize: "11px", ml: 2 }}>
-                  {timeAgo(c.createdAt)}
-                </Typography>
-              </Stack>
+                  <Typography
+                    sx={{ fontWeight: 700, fontSize: "13px", color: "#fff" }}
+                  >
+                    {c.user?.userName}
+                  </Typography>
+                  <Typography sx={{ color: "#999", fontSize: "11px" }}>
+                    {timeAgo(c.createdAt)}
+                  </Typography>
+                </Stack>
 
-              <Typography
-                sx={{
-                  fontSize: "13px",
-                  color: "#ddd",
-                  lineHeight: 1.45,
-                  mb: 0.6,
-                }}
-              >
-                {c.text}
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    color: "#ddd",
+                    lineHeight: 1.45,
+                    mb: 0.6,
+                  }}
+                >
+                  {c.text}
+                </Typography>
 
-              <Typography
-                sx={{
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  background:
-                    "linear-gradient(90deg, rgb(5,89,90), rgb(3,120,121))",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  cursor: "pointer",
-                }}
-              >
-                ❤️ {c.likesComment?.length || 0} Likes
-              </Typography>
-            </Box>
-          </Stack>
-        ))}
-      </Box>
-    </Card>
+                <Typography
+                  sx={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    background:
+                      "linear-gradient(90deg, rgb(5,89,90), rgb(3,120,121))",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    cursor: "pointer",
+                  }}
+                >
+                  ❤️ {c.likesComment?.length || 0} Likes
+                </Typography>
+              </Box>
+            </Stack>
+          ))}
+
+          {/* Hide comments */}
+          {showAllComments && comments.length > 1 && (
+            <Typography
+              onClick={(e) => {
+                e.preventDefault();
+                setShowAllComments(false);
+              }}
+              sx={{
+                fontSize: "13px",
+                color: "#999",
+                cursor: "pointer",
+                mt: 0.5,
+                ml: 1,
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              Hide comments
+            </Typography>
+          )}
+        </Box>
+      </Card>
+    </Box>
   );
 }
