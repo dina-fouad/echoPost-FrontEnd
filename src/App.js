@@ -8,7 +8,11 @@ import Register from "./pages/Forms/Register";
 import Home from "./pages/Home";
 import Footer from "./Components/Footer";
 import PostDetails from "./pages/PostDetails";
+import Profile from "./pages/Profile";
 import { useSnackbar } from "notistack";
+import ForgotPassword from "./pages/Forms/ForgotPassword";
+import ResetPassword from "./pages/Forms/ResetPassword";
+import NotFound from "./pages/NotFound";
 
 function App() {
   const location = useLocation();
@@ -24,7 +28,7 @@ function App() {
       style={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh", // ✅ يملأ كامل الشاشة
+        minHeight: "100vh",
       }}
     >
       {/* Header */}
@@ -41,11 +45,14 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/posts" element={<PostsPage />} />
           <Route path="/create" element={<CreatePost toastMsg={toastMsg} />} />
           <Route path="/create/details/:id" element={<PostDetails />} />
           <Route path="/dashboard" element={<AdminDashBoard />} />
-          <Route path="*" element={<h1>404 Not Found</h1>} />
+          <Route path="/profile/:id" element={<Profile />} />
+          <Route path="*" element={<NotFound/>} />
         </Routes>
       </div>
 

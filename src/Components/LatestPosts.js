@@ -38,32 +38,38 @@ function timeAgo(date) {
   }
 }
 
-export default function LatestPosts({ showAll = false }) {
+export default function LatestPosts({ showAll = false, userId = null }) {
   const [allPosts, setAllPosts] = useState([]);
   const [visiblePosts, setVisiblePosts] = useState([]);
 
   const postsPerPage = 2;
 
- const loadAllPosts = useCallback(async () => {
-  try {
-    const res = await axios.get("http://localhost:5000/api/posts");
-    const posts = res.data.post || [];
+  const loadAllPosts = useCallback(async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/posts");
+      const posts = res.data.post || [];
 
-    setAllPosts(posts);
+      // ================= FILTER ONLY IF userId EXISTS =================
+      const filteredPosts = userId
+        ? posts.filter((p) => p.user?._id === userId)
+        : posts;
 
-    if (!showAll) {
-      setVisiblePosts(posts.slice(0, 3));
-    } else {
-      setVisiblePosts(posts.slice(0, postsPerPage));
+      setAllPosts(filteredPosts);
+
+      // ================= KEEP YOUR ORIGINAL LOGIC =================
+      if (!showAll) {
+        setVisiblePosts(filteredPosts.slice(0, 3)); // 🔥 3 posts only (UNCHANGED)
+      } else {
+        setVisiblePosts(filteredPosts.slice(0, postsPerPage));
+      }
+    } catch (err) {
+      console.log(err);
     }
-  } catch (err) {
-    console.log(err);
-  }
-}, [showAll, postsPerPage]);
+  }, [showAll, userId, postsPerPage]);
 
- useEffect(() => {
-  loadAllPosts();
-}, [loadAllPosts]);
+  useEffect(() => {
+    loadAllPosts();
+  }, [loadAllPosts]);
 
   const fetchMore = () => {
     setVisiblePosts(allPosts.slice(0, visiblePosts.length + postsPerPage));
@@ -90,9 +96,7 @@ export default function LatestPosts({ showAll = false }) {
         </Box>
       }
       endMessage={
-        <p style={{ textAlign: "center", color: "#aaa" }}>
-          No more posts
-        </p>
+        <p style={{ textAlign: "center", color: "#aaa" }}>No more posts</p>
       }
       style={{ overflow: "hidden" }}
     >
@@ -111,10 +115,7 @@ function CardPost({ post }) {
 
   const comments = post.comments || [];
 
-  // 👇 Facebook behavior (latest comment only)
-  const visibleComments = showAllComments
-    ? comments
-    : comments.slice(-1);
+  const visibleComments = showAllComments ? comments : comments.slice(-1);
 
   return (
     <Box
@@ -151,11 +152,21 @@ function CardPost({ post }) {
 
         {/* USER */}
         <Stack direction="row" spacing={2} sx={{ p: 2 }}>
-          <Avatar src={post.user?.profileImage?.url} />
+          <Link
+            to={`/profile/${post.user?._id}`}
+            style={{ textDecoration: "none" }}
+          >
+            <Avatar src={post.user?.profileImage?.url} />
+          </Link>
+
           <Box>
-            <Typography fontWeight={700}>
-              {post.user?.userName}
-            </Typography>
+            <Link
+              to={`/profile/${post.user?._id}`}
+              style={{ textDecoration: "none", color: "inherit" }}
+            >
+              <Typography fontWeight={700}>{post.user?.userName}</Typography>
+            </Link>
+
             <Typography fontSize={11} color="#bbb">
               {timeAgo(post.createdAt)}
             </Typography>
@@ -184,7 +195,6 @@ function CardPost({ post }) {
             Comments ({comments.length})
           </Typography>
 
-          {/* View previous comments */}
           {comments.length > 1 && !showAllComments && (
             <Typography
               onClick={(e) => {
@@ -215,11 +225,15 @@ function CardPost({ post }) {
                 borderRadius: "10px",
               }}
             >
-              <Avatar
-                src={c.user.profileImage.url}
-                sx={{ width: 36, height: 36 }}
-              />
-
+              <Link
+                to={`/profile/${c.user?._id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <Avatar
+                  src={c.user?.profileImage?.url}
+                  sx={{ width: 36, height: 36 }}
+                />
+              </Link>
               <Box sx={{ flex: 1 }}>
                 <Stack
                   direction="row"
@@ -227,24 +241,22 @@ function CardPost({ post }) {
                   alignItems="center"
                   sx={{ mb: 0.4 }}
                 >
-                  <Typography
-                    sx={{ fontWeight: 700, fontSize: "13px", color: "#fff" }}
+                  <Link
+                    to={`/profile/${c.user?._id}`}
+                    style={{ textDecoration: "none", color: "inherit" }}
                   >
-                    {c.user?.userName}
-                  </Typography>
+                    <Typography
+                      sx={{ fontWeight: 700, fontSize: "13px", color: "#fff" }}
+                    >
+                      {c.user?.userName}
+                    </Typography>
+                  </Link>
                   <Typography sx={{ color: "#999", fontSize: "11px" }}>
                     {timeAgo(c.createdAt)}
                   </Typography>
                 </Stack>
 
-                <Typography
-                  sx={{
-                    fontSize: "13px",
-                    color: "#ddd",
-                    lineHeight: 1.45,
-                    mb: 0.6,
-                  }}
-                >
+                <Typography sx={{ fontSize: "13px", color: "#ddd" }}>
                   {c.text}
                 </Typography>
 
@@ -252,11 +264,7 @@ function CardPost({ post }) {
                   sx={{
                     fontSize: "12px",
                     fontWeight: 600,
-                    background:
-                      "linear-gradient(90deg, rgb(5,89,90), rgb(3,120,121))",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    cursor: "pointer",
+                    color: "#038889",
                   }}
                 >
                   ❤️ {c.likesComment?.length || 0} Likes
@@ -265,7 +273,6 @@ function CardPost({ post }) {
             </Stack>
           ))}
 
-          {/* Hide comments */}
           {showAllComments && comments.length > 1 && (
             <Typography
               onClick={(e) => {
@@ -277,8 +284,6 @@ function CardPost({ post }) {
                 color: "#999",
                 cursor: "pointer",
                 mt: 0.5,
-                ml: 1,
-                "&:hover": { textDecoration: "underline" },
               }}
             >
               Hide comments

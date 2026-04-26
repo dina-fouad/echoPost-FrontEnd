@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
-export default function Login() {
+export default function ResetPassword() {
+  const { token } = useParams();
+
   const [form, setForm] = useState({
-    email: "",
     password: "",
   });
 
@@ -20,40 +21,38 @@ export default function Login() {
   };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({ password: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.email) return showToast("Email is required ❌", "error");
-    if (!form.password) return showToast("Password is required ❌", "error");
+    if (!form.password)
+      return showToast("Password is required ❌", "error");
+
+    if (form.password.length < 6)
+      return showToast("Password must be at least 6 characters ❌", "error");
 
     setLoading(true);
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        form,
+        `http://localhost:5000/api/auth/reset-password/${token}`,
+        { password: form.password }
       );
 
-      console.log("LOGIN RESPONSE:", res.data);
+      console.log("RESET PASSWORD RESPONSE:", res.data);
 
-      if (res.data?.token) {
-        console.log("USER DATA:", {
-          id: res.data.id,
-          userName: res.data.userName,
-          token: res.data.token,
-        });
+      showToast("Password updated successfully 🎉", "success");
 
-        showToast("Welcome back 🎉", "success");
-
-        setForm({ email: "", password: "" });
-      } else {
-        showToast(res.data?.msg || "Login failed ❌", "error");
-      }
+      setForm({
+        password: "",
+      });
     } catch (err) {
-      showToast(err.response?.data?.msg || "Login failed ❌", "error");
+      showToast(
+        err.response?.data?.msg || "Reset failed ❌",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -69,35 +68,20 @@ export default function Login() {
 
       <div className="container">
         <div className="card">
-          <h1>🔐 Login</h1>
-          <p>Welcome back 👋</p>
+          <h1>🔒 Reset Password</h1>
+          <p>Create a new password</p>
 
           <form onSubmit={handleSubmit}>
             <input
-              name="email"
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-            />
-
-            <input
               name="password"
               type="password"
-              placeholder="Password"
+              placeholder="New Password"
               value={form.password}
               onChange={handleChange}
             />
 
-            {/* 🔥 Forgot Password */}
-            <Link
-              to={`/forgot-password`}
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
-              <div className="forgot">Forgot password?</div>
-            </Link>
             <button type="submit" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Updating..." : "Reset Password"}
             </button>
           </form>
         </div>
@@ -167,18 +151,6 @@ export default function Login() {
           background: #0c1c1d;
           color: white;
           font-size: 16px;
-        }
-
-        .forgot {
-          text-align: right;
-          font-size: 13px;
-          color: #00ffe1;
-          margin-bottom: 20px;
-          cursor: pointer;
-        }
-
-        .forgot:hover {
-          text-decoration: underline;
         }
 
         button {

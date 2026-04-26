@@ -25,6 +25,7 @@ import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 
 import PostLikesSection from "./PostLikesSection";
 import Comments from "./Comments";
+import { Link } from "react-router-dom";
 
 function timeAgo(date) {
   if (!date) return "";
@@ -62,6 +63,8 @@ export default function PostDetails() {
 
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
+
+  // const [commentLikes, setCommentLikes] = useState({});
 
   const fileInputRef = React.useRef(null);
 
@@ -161,50 +164,50 @@ export default function PostDetails() {
   }
 
   const handleDeleteComment = async (commentId) => {
-  try {
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZTdkMmZmNDFjMTdjMmE0MjE3MjUzZiIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3NzY4ODM1NDV9.3kdFvlqWw-H4mywcGWGl8G9rHd1El2Eo_ehK58yRHwk";
+    try {
+      const token =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZTdkMmZmNDFjMTdjMmE0MjE3MjUzZiIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3NzY4ODM1NDV9.3kdFvlqWw-H4mywcGWGl8G9rHd1El2Eo_ehK58yRHwk";
 
-    await axios.delete(`http://localhost:5000/api/comments/${commentId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    setComments((prev) => prev.filter((c) => c._id !== commentId));
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-const handleSaveComment = async (commentId) => {
-  try {
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZTdkMmZmNDFjMTdjMmE0MjE3MjUzZiIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3NzY4ODM1NDV9.3kdFvlqWw-H4mywcGWGl8G9rHd1El2Eo_ehK58yRHwk";
-
-    const res = await axios.put(
-      `http://localhost:5000/api/comments/${commentId}`,
-      { text: editCommentText },
-      {
+      await axios.delete(`http://localhost:5000/api/comments/${commentId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
+      });
 
-    setComments((prev) =>
-      prev.map((c) =>
-        c._id === commentId ? res.data.comment : c
-      )
-    );
+      setComments((prev) => prev.filter((c) => c._id !== commentId));
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
-    setEditingCommentId(null);
-  } catch (err) {
-    console.log(err);
-  }
-};
+  const handleSaveComment = async (commentId) => {
+    try {
+      const token =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZTdkMmZmNDFjMTdjMmE0MjE3MjUzZiIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3NzY4ODM1NDV9.3kdFvlqWw-H4mywcGWGl8G9rHd1El2Eo_ehK58yRHwk";
 
-const handleLikeUpdate = (updatedPost) => {
-  setPost(updatedPost);
-};
+      const res = await axios.put(
+        `http://localhost:5000/api/comments/${commentId}`,
+        { text: editCommentText },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setComments((prev) =>
+        prev.map((c) => (c._id === commentId ? res.data.comment : c)),
+      );
+
+      setEditingCommentId(null);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleLikeUpdate = (updatedPost) => {
+    setPost(updatedPost);
+  };
 
   return (
     <Card
@@ -226,12 +229,16 @@ const handleLikeUpdate = (updatedPost) => {
         onChange={handlePostImageUpload}
       />
 
-      {post.postImg?.url && (
+      {post.postImg?.url ? (
         <Box sx={{ width: "100%", position: "relative" }}>
           <img
             src={post.postImg.url}
             alt="post"
-            style={{ width: "100%", objectFit: "cover" }}
+            style={{
+              width: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
           />
 
           <IconButton
@@ -247,7 +254,7 @@ const handleLikeUpdate = (updatedPost) => {
             <PhotoCameraIcon fontSize="small" />
           </IconButton>
         </Box>
-      )}
+      ) : null}
 
       <Stack
         direction="row"
@@ -255,9 +262,19 @@ const handleLikeUpdate = (updatedPost) => {
         sx={{ padding: { xs: "8px 10px", sm: "12px 16px" } }}
       >
         <Stack direction="row" spacing={1.5}>
-          <Avatar src={post.user?.profileImage?.url} />
+          <Link
+            to={`/profile/${post.user?._id}`}
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <Avatar src={post.user?.profileImage?.url} />
+          </Link>
           <Box>
-            <Typography fontWeight={700}>{post.user?.userName}</Typography>
+            <Link
+              to={`/profile/${post.user?._id}`}
+              style={{ textDecoration: "none", color: "inherit" }}
+            >
+              <Typography fontWeight={700}>{post.user?.userName}</Typography>
+            </Link>
             <Typography sx={{ fontSize: 11, color: "#bbb" }}>
               {timeAgo(post.createdAt)}
             </Typography>
@@ -355,12 +372,21 @@ const handleLikeUpdate = (updatedPost) => {
                 backgroundColor: "#2a2a2a",
               }}
             >
-              <Avatar src={c.user?.profileImage?.url} />
-
+              <Link
+                to={`/profile/${c.user?._id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <Avatar src={c.user?.profileImage?.url} />
+              </Link>
               <Box sx={{ flex: 1 }}>
                 {/* HEADER */}
                 <Stack direction="row" justifyContent="space-between">
-                  <Typography fontWeight={700}>{c.user?.userName}</Typography>
+                  <Link
+                    to={`/profile/${c.user?._id}`}
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <Typography fontWeight={700}>{c.user?.userName}</Typography>
+                  </Link>
 
                   {/* actions */}
                   <Stack direction="row" spacing={0.5}>
@@ -440,6 +466,7 @@ const handleLikeUpdate = (updatedPost) => {
 
                   {/* LIKES */}
                   <Typography
+                    //  onClick={handleLike}
                     sx={{
                       fontSize: 12,
                       fontWeight: 600,

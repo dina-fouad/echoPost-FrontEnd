@@ -13,18 +13,24 @@ import {
 
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import { Link } from "react-router-dom";
 
 export default function PostLikesSection({ post, onLike }) {
   const [openLikesPopup, setOpenLikesPopup] = React.useState(false);
 
+  // 🔥 likes state من البوست
+  const [likes, setLikes] = React.useState(post.likes || []);
+
   const token =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZTRmZGI0ZjJjMTJhY2RlMzJkY2U1NyIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3NzY4ODQ0NTZ9.XGhjOxJqJxgrGBInenp0KbaUi40hYrGT-vECdo_cF1c";
 
-  const userId = localStorage.getItem("userId");
+  // ⚠️ مؤقت (لأنه ما عندك auth حالياً)
+  const userId = "temp-user-id";
 
-  // ✅ FIX: check by _id
-  const isLiked = post?.likes?.some((u) => u._id === userId);
+  // ❤️ هل المستخدم عامل لايك؟
+  const isLiked = likes?.some((u) => u._id === userId);
 
+  // ================= HANDLE LIKE =================
   const handleLike = async () => {
     try {
       const res = await axios.put(
@@ -34,8 +40,13 @@ export default function PostLikesSection({ post, onLike }) {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
+
+      // 🔥 لازم backend يرجع likes array
+      if (res.data.likes) {
+        setLikes(res.data.likes);
+      }
 
       if (onLike) onLike(res.data);
     } catch (err) {
@@ -43,8 +54,9 @@ export default function PostLikesSection({ post, onLike }) {
     }
   };
 
+  // ================= POPUP =================
   const openPopup = () => {
-    if (post.likes?.length > 0) {
+    if (likes?.length > 0) {
       setOpenLikesPopup(true);
     }
   };
@@ -67,7 +79,7 @@ export default function PostLikesSection({ post, onLike }) {
           {isLiked ? (
             <FavoriteIcon
               sx={{
-                color: "#22c55e", // أخضر كامل
+                color: "#22c55e",
                 fontSize: 25,
               }}
             />
@@ -84,7 +96,7 @@ export default function PostLikesSection({ post, onLike }) {
         {/* ================= AVATARS ================= */}
         <Stack direction="row" alignItems="center" sx={{ ml: 0.5 }}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            {post.likes?.slice(0, 3).map((likeUser, index) => (
+            {likes?.slice(0, 3).map((likeUser, index) => (
               <Avatar
                 key={likeUser._id || index}
                 onClick={openPopup}
@@ -100,8 +112,8 @@ export default function PostLikesSection({ post, onLike }) {
             ))}
           </Box>
 
-          {/* 🔢 COUNT (same color as usernames) */}
-          {post.likes?.length > 0 && (
+          {/* 🔢 COUNT */}
+          {likes?.length > 0 && (
             <Typography
               onClick={openPopup}
               sx={{
@@ -109,11 +121,11 @@ export default function PostLikesSection({ post, onLike }) {
                 ml: 0.6,
                 fontWeight: 500,
                 cursor: "pointer",
-                color: "#e5e7eb", // نفس لون الأسماء
+                color: "#e5e7eb",
                 "&:hover": { textDecoration: "underline" },
               }}
             >
-              {post.likes.length} likes
+              {likes.length} likes
             </Typography>
           )}
         </Stack>
@@ -143,7 +155,7 @@ export default function PostLikesSection({ post, onLike }) {
         </DialogTitle>
 
         <DialogContent sx={{ pt: 2 }}>
-          {post.likes?.map((user, i) => (
+          {likes?.map((user, i) => (
             <Stack
               key={user._id || i}
               direction="row"
@@ -157,14 +169,23 @@ export default function PostLikesSection({ post, onLike }) {
                 },
               }}
             >
-              <Avatar
-                src={user.profileImage?.url}
-                sx={{ width: 36, height: 36 }}
-              />
-
-              <Typography sx={{ fontWeight: 500, color: "#e5e7eb" }}>
-                {user.userName}
-              </Typography>
+              <Link
+                to={`/profile/${user._id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <Avatar
+                  src={user.profileImage?.url}
+                  sx={{ width: 36, height: 36 }}
+                />
+              </Link>
+              <Link
+                to={`/profile/${user._id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <Typography sx={{ fontWeight: 500, color: "#e5e7eb" }}>
+                  {user.userName}
+                </Typography>
+              </Link>
             </Stack>
           ))}
         </DialogContent>
